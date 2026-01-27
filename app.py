@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 from matplotlib import pyplot as plt
+from sklearn.datasets import fetch_openml
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -20,8 +21,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
-DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional/bank-additional-full.csv"
-TARGET_COL = "y"
+DATASET_NAME = "adult"
+TARGET_COL = "income"
 RANDOM_STATE = 42
 MODEL_DIR = Path("model")
 
@@ -29,14 +30,16 @@ MODEL_DIR = Path("model")
 def load_dataset() -> pd.DataFrame:
     @st.cache_data(show_spinner=False)
     def _load() -> pd.DataFrame:
-        df = pd.read_csv(DATA_URL, sep=";")
+        data = fetch_openml(DATASET_NAME, version=2, as_frame=True)
+        df = data.frame.rename(columns={"class": TARGET_COL})
+        df = df.replace("?", np.nan).dropna()
         return df
 
     return _load()
 
 
 def split_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    y = df[TARGET_COL].map({"yes": 1, "no": 0})
+    y = df[TARGET_COL].apply(lambda x: 1 if x.strip() == ">50K" else 0)
     X = df.drop(columns=[TARGET_COL])
     return train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
@@ -88,7 +91,7 @@ def predict_uploaded(pipeline, df: pd.DataFrame) -> pd.DataFrame:
         proba = pipeline.predict_proba(data)[:, 1]
     result = pd.DataFrame({"prediction": preds})
     if proba is not None:
-        result["probability_yes"] = proba
+        result["probability_positive"] = proba
     if has_label:
         result[TARGET_COL] = df[TARGET_COL].values
     return result
@@ -96,7 +99,7 @@ def predict_uploaded(pipeline, df: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     st.title("Classification Model Comparison")
-    st.write("Bank Marketing (UCI) dataset with six models and standard metrics.")
+    st.write("Adult Census Income (UCI/OpenML) dataset with six models and standard metrics.")
 
     df = load_dataset()
     X_train, X_test, y_train, y_test = split_data(df)
@@ -125,7 +128,7 @@ def main() -> None:
             results = predict_uploaded(pipeline, uploaded_df)
             st.write("Predictions", results.head())
             if TARGET_COL in uploaded_df.columns:
-                y_true = uploaded_df[TARGET_COL].map({"yes": 1, "no": 0}) if uploaded_df[TARGET_COL].dtype == object else uploaded_df[TARGET_COL]
+                y_true = uploaded_df[TARGET_COL].apply(lambda x: 1 if str(x).strip() == ">50K" else 0)
                 y_pred = results["prediction"]
                 metrics_u = {
                     "accuracy": accuracy_score(y_true, y_pred),

@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from typing import Dict, List
 
@@ -7,6 +6,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import fetch_openml
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -25,14 +25,16 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 
-DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional/bank-additional-full.csv"
-TARGET_COL = "y"
+DATASET_NAME = "adult"
+TARGET_COL = "income"
 RANDOM_STATE = 42
 MODEL_DIR = Path("model")
 
 
 def load_dataset() -> pd.DataFrame:
-    df = pd.read_csv(DATA_URL, sep=";")
+    data = fetch_openml(DATASET_NAME, version=2, as_frame=True)
+    df = data.frame.rename(columns={"class": TARGET_COL})
+    df = df.replace("?", np.nan).dropna()
     return df
 
 
@@ -95,7 +97,7 @@ def save_metrics(metrics: List[Dict[str, float]]) -> None:
 def main() -> None:
     MODEL_DIR.mkdir(exist_ok=True, parents=True)
     df = load_dataset()
-    y = df[TARGET_COL].map({"yes": 1, "no": 0})
+    y = df[TARGET_COL].apply(lambda x: 1 if x.strip() == ">50K" else 0)
     X = df.drop(columns=[TARGET_COL])
     preprocessor = build_preprocessor(df)
     X_train, X_test, y_train, y_test = train_test_split(
