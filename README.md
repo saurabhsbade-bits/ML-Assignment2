@@ -35,7 +35,7 @@ Trained on an 80/20 stratified split with preprocessing (one-hot for categorical
 ```
 project-folder/
 │-- app.py
-│-- train_models.py
+│-- run_train.py
 │-- requirements.txt
 │-- README.md
 │-- model/        # saved pipelines (.joblib) and metrics (.csv/.json)
@@ -43,12 +43,29 @@ project-folder/
 
 ## How to run locally
 1. Install deps: `pip install -r requirements.txt`
-2. Train and save models: `python train_models.py`
+2. Train and save models: `python run_train.py`
 3. Launch app: `streamlit run app.py`
 
+## Streamlit App Features
+- **Dataset upload**: Upload CSV files for batch predictions on test data.
+- **Model selection**: Dropdown selector to choose from all six trained models.
+- **Metrics display**: View all six evaluation metrics (accuracy, AUC, precision, recall, F1, MCC) for selected model.
+- **Confusion matrix**: Visual heatmap of predicted vs. actual labels on hold-out test set.
+- **Classification report**: Detailed metrics breakdown for uploaded test data if labels are provided.
+
 ## Deployment (Streamlit Community Cloud)
-- Connect GitHub repo, select main branch and `app.py`, deploy. Ensure `requirements.txt` is present. The app reads saved pipelines from `model/` and downloads the dataset if needed.
+1. Go to https://streamlit.io/cloud
+2. Sign in using GitHub account
+3. Click "New App"
+4. Select the ML-Assignment2 repository
+5. Select branch: main
+6. Select app: app.py
+7. Click Deploy
+
+Ensure `requirements.txt` is present and all dependencies are listed. The app loads saved joblib pipelines from the `model/` directory.
 
 ## Notes for submission
-- Include the GitHub repo link, live Streamlit app link, README content (this file) in the submission PDF.
-- Capture and attach one screenshot of the app running on BITS Virtual Lab.
+- GitHub repo link: https://github.com/saurabhsbade-bits/ML-Assignment2
+- Live Streamlit app link: (to be generated after deployment on Streamlit Cloud)
+- Include README content (this file) in the submission PDF.
+- Capture one screenshot of the app running on BITS Virtual Lab.
