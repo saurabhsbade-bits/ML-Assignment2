@@ -101,6 +101,24 @@ def main() -> None:
     st.title("Classification Model Comparison")
     st.write("Adult Census Income (UCI/OpenML) dataset with six models and standard metrics.")
 
+    st.sidebar.subheader("Download sample CSVs")
+    sample_no_label = Path("data/sample_test_no_label.csv")
+    sample_with_label = Path("data/sample_test_with_label.csv")
+    if sample_no_label.exists():
+        st.sidebar.download_button(
+            label="Download test data (no label)",
+            data=sample_no_label.read_bytes(),
+            file_name="sample_test_no_label.csv",
+            mime="text/csv",
+        )
+    if sample_with_label.exists():
+        st.sidebar.download_button(
+            label="Download test data (with label)",
+            data=sample_with_label.read_bytes(),
+            file_name="sample_test_with_label.csv",
+            mime="text/csv",
+        )
+
     df = load_dataset()
     X_train, X_test, y_train, y_test = split_data(df)
 
@@ -126,7 +144,14 @@ def main() -> None:
             uploaded_df = pd.read_csv(uploaded)
             st.write("Preview", uploaded_df.head())
             results = predict_uploaded(pipeline, uploaded_df)
-            st.write("Predictions", results.head())
+            st.subheader("Predictions")
+            st.dataframe(results.head(50), use_container_width=True)
+            st.download_button(
+                label="Download predictions as CSV",
+                data=results.to_csv(index=False).encode("utf-8"),
+                file_name="predictions.csv",
+                mime="text/csv",
+            )
             if TARGET_COL in uploaded_df.columns:
                 y_true = uploaded_df[TARGET_COL].apply(lambda x: 1 if str(x).strip() == ">50K" else 0)
                 y_pred = results["prediction"]
@@ -137,12 +162,17 @@ def main() -> None:
                     "f1": f1_score(y_true, y_pred, zero_division=0),
                     "mcc": matthews_corrcoef(y_true, y_pred),
                 }
-                st.write("Uploaded data metrics", metrics_u)
-                st.text("Classification report\n" + classification_report(y_true, y_pred))
+                st.subheader("Uploaded data metrics")
+                metrics_df = pd.DataFrame([metrics_u]).T.rename(columns={0: "value"})
+                st.table(metrics_df)
+
+                st.subheader("Classification report")
+                report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+                report_df = pd.DataFrame(report).transpose()
+                st.dataframe(report_df, use_container_width=True)
         except Exception as exc:  # noqa: BLE001
             st.error(f"Failed to score uploaded file: {exc}")
 
-    st.caption("Run train_models.py to refresh saved pipelines and metrics.")
 
 
 if __name__ == "__main__":
