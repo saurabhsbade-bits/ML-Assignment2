@@ -73,10 +73,13 @@ def evaluate(pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> Tuple[Dict[st
 
 
 def show_confusion_matrix(cm: np.ndarray) -> None:
-    fig, ax = plt.subplots()
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax)
-    ax.set_xlabel("Predicted")
-    ax.set_ylabel("Actual")
+    fig, ax = plt.subplots(figsize=(4, 3.2))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax, 
+                annot_kws={"size": 16}, square=False)
+    ax.set_xlabel("Predicted", fontsize=12, fontweight='bold')
+    ax.set_ylabel("Actual", fontsize=12, fontweight='bold')
+    ax.tick_params(labelsize=10)
+    plt.tight_layout(pad=1)
     st.pyplot(fig)
 
 
@@ -98,6 +101,7 @@ def predict_uploaded(pipeline, df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
+    st.set_page_config(page_title="Model Comparison", layout="wide")
     st.title("Classification Model Comparison")
     st.write("Adult Census Income (UCI/OpenML) dataset with six models and standard metrics.")
 
@@ -130,29 +134,48 @@ def main() -> None:
     model_name = st.sidebar.selectbox("Select model", sorted(models.keys()))
     pipeline = joblib.load(models[model_name])
 
+    st.sidebar.subheader("Upload test data")
+    uploaded = st.sidebar.file_uploader("Upload CSV with matching feature columns", type=["csv"])
+
+    # Hold-out test set performance
+    st.header("📊 Hold-out Test Set Performance")
+    st.write("Performance evaluated on the 20% hold-out test split from the original dataset.")
+    
     metrics, cm = evaluate(pipeline, X_test, y_test)
-    st.subheader("Evaluation metrics (hold-out test)")
-    st.table(pd.DataFrame([metrics], index=[model_name]).T.rename(columns={0: "value"}))
-
-    st.subheader("Confusion matrix")
-    show_confusion_matrix(cm)
-
-    st.subheader("Upload test CSV")
-    uploaded = st.file_uploader("Upload CSV with matching feature columns", type=["csv"])
+    
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.subheader("Evaluation Metrics")
+        metrics_df = pd.DataFrame.from_dict(metrics, orient='index', columns=['Value'])
+        metrics_df.index.name = 'Metric'
+        metrics_df['Value'] = metrics_df['Value'].apply(lambda x: f"{x:.4f}")
+        st.dataframe(metrics_df, height=300)
+    
+    with col2:
+        st.subheader("Confusion Matrix")
+        show_confusion_matrix(cm)
+    
+    # Uploaded test data performance
     if uploaded:
+        st.divider()
+        st.header("📁 Uploaded Test Data Performance")
         try:
             uploaded_df = pd.read_csv(uploaded)
-            st.write("Preview", uploaded_df.head())
+            st.write("**Data Preview:**")
+            st.dataframe(uploaded_df.head(), width='stretch')
+            
             results = predict_uploaded(pipeline, uploaded_df)
             st.subheader("Predictions")
-            st.dataframe(results.head(50), use_container_width=True)
+            st.dataframe(results.head(50), width='stretch')
             st.download_button(
                 label="Download predictions as CSV",
                 data=results.to_csv(index=False).encode("utf-8"),
                 file_name="predictions.csv",
                 mime="text/csv",
             )
+            
             if TARGET_COL in uploaded_df.columns:
+                st.divider()
                 y_true = uploaded_df[TARGET_COL].apply(lambda x: 1 if str(x).strip() == ">50K" else 0)
                 y_pred = results["prediction"]
                 metrics_u = {
@@ -162,14 +185,26 @@ def main() -> None:
                     "f1": f1_score(y_true, y_pred, zero_division=0),
                     "mcc": matthews_corrcoef(y_true, y_pred),
                 }
-                st.subheader("Uploaded data metrics")
-                metrics_df = pd.DataFrame([metrics_u]).T.rename(columns={0: "value"})
-                st.table(metrics_df)
+                cm_u = confusion_matrix(y_true, y_pred)
+                
+                col3, col4 = st.columns([1, 1])
+                with col3:
+                    st.subheader("Evaluation Metrics")
+                    metrics_df = pd.DataFrame.from_dict(metrics_u, orient='index', columns=['Value'])
+                    metrics_df.index.name = 'Metric'
+                    metrics_df['Value'] = metrics_df['Value'].apply(lambda x: f"{x:.4f}")
+                    st.dataframe(metrics_df, height=300)
+                
+                with col4:
+                    st.subheader("Confusion Matrix")
+                    show_confusion_matrix(cm_u)
 
-                st.subheader("Classification report")
+                st.subheader("Classification Report")
                 report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
                 report_df = pd.DataFrame(report).transpose()
-                st.dataframe(report_df, use_container_width=True)
+                st.dataframe(report_df, width='stretch')
+            else:
+                st.info(f"ℹ️ No '{TARGET_COL}' column found. Predictions generated, but evaluation metrics require labeled data. Use the 'Download test data (with label)' button in the sidebar to get a sample with labels.")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Failed to score uploaded file: {exc}")
 
