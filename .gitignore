@@ -1,0 +1,47 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Assignment related files (not needed in submission)
+assignment.txt
+ML_Assignment_2.pdf
+DEPLOYMENT_GUIDE.md
+run_train.py
+make_samples.py
+
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+
+# Sample data files (optional - uncomment to ignore)
+# data/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

@@ -128,7 +128,7 @@ def main() -> None:
 
     models = list_models()
     if not models:
-        st.error("No trained models found. Run train_models.py locally to generate joblib files.")
+        st.error("No trained models found. Run model/train_models.py locally to generate joblib files.")
         return
 
     model_name = st.sidebar.selectbox("Select model", sorted(models.keys()))
