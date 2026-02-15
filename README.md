@@ -1,13 +1,13 @@
 # ML Assignment 2 – Classification Models and Streamlit App
 
 ## Problem statement
-Build and compare six classification models on a public dataset, report standard metrics, and expose an interactive Streamlit UI for model exploration and predictions. Deploy the app on Streamlit Community Cloud and provide links plus a BITS Lab execution screenshot.
+Build and compare six classification models on a public dataset, report standard metrics, and deploy an interactive Streamlit web application for model exploration and predictions.
 
 ## Dataset description
-- Dataset: Adult Census Income (UCI/OpenML) – predict if income >50K.
-- Source: https://www.openml.org/d/1590 (fetched via `fetch_openml('adult', version=2)`)
-- Instances: ~48,842; Features: 14 input features (categorical + numerical); Target: binary income column.
-- Rationale: Public, research-friendly license; meets >=12 features and >=500 rows requirement.
+- **Dataset**: Adult Census Income (UCI/OpenML) – binary classification to predict if income >50K
+- **Source**: https://www.openml.org/d/1590 (fetched via `fetch_openml('adult', version=2)`)
+- **Size**: ~48,842 instances with 14 input features (mix of categorical and numerical)
+- **Target**: Binary income classification (<=50K or >50K)
 
 ## Models and metrics
 Trained on an 80/20 stratified split with preprocessing (one-hot for categoricals, scaling for numerics). Metrics: Accuracy, AUC, Precision, Recall, F1, MCC.
@@ -34,38 +34,32 @@ Trained on an 80/20 stratified split with preprocessing (one-hot for categorical
 ## Project structure
 ```
 project-folder/
-│-- app.py
-│-- run_train.py
-│-- requirements.txt
-│-- README.md
-│-- model/        # saved pipelines (.joblib) and metrics (.csv/.json)
+│-- app.py                    # Streamlit web application
+│-- requirements.txt          # Python dependencies
+│-- README.md                 # Project documentation
+│-- data/                     # Sample test CSV files
+│-- model/
+    │-- train_models.py       # Training script for all models
+    │-- *.joblib              # Saved model pipelines
+    │-- metrics.csv/json      # Model evaluation results
 ```
 
 ## How to run locally
-1. Install deps: `pip install -r requirements.txt`
-2. Train and save models: `python run_train.py`
+1. Install dependencies: `pip install -r requirements.txt`
+2. Train and save models: `python model/train_models.py`
 3. Launch app: `streamlit run app.py`
 
 ## Streamlit App Features
-- **Dataset upload**: Upload CSV files for batch predictions on test data.
-- **Model selection**: Dropdown selector to choose from all six trained models.
-- **Metrics display**: View all six evaluation metrics (accuracy, AUC, precision, recall, F1, MCC) for selected model.
-- **Confusion matrix**: Visual heatmap of predicted vs. actual labels on hold-out test set.
-- **Classification report**: Detailed metrics breakdown for uploaded test data if labels are provided.
+- **Model selection**: Choose from six trained classification models via sidebar dropdown
+- **Hold-out test performance**: View evaluation metrics and confusion matrix on 20% hold-out test split
+- **Dataset upload**: Upload CSV files via sidebar for batch predictions on custom test data
+- **Metrics display**: Comprehensive metrics (accuracy, AUC, precision, recall, F1, MCC) with confusion matrix
+- **Classification report**: Detailed per-class metrics for uploaded data (when labels are provided)
+- **Downloadable predictions**: Export predictions as CSV file
 
-## Deployment (Streamlit Community Cloud)
-1. Go to https://streamlit.io/cloud
-2. Sign in using GitHub account
-3. Click "New App"
-4. Select the ML-Assignment2 repository
-5. Select branch: main
-6. Select app: app.py
-7. Click Deploy
+## Deployment
+Deployed on Streamlit Community Cloud. The app automatically loads pre-trained model pipelines from the `model/` directory.
 
-Ensure `requirements.txt` is present and all dependencies are listed. The app loads saved joblib pipelines from the `model/` directory.
-
-## Notes for submission
-- GitHub repo link: https://github.com/saurabhsbade-bits/ML-Assignment2
-- Live Streamlit app link: (to be generated after deployment on Streamlit Cloud)
-- Include README content (this file) in the submission PDF.
-- Capture one screenshot of the app running on BITS Virtual Lab.
+## Links
+- **GitHub repository**: https://github.com/saurabhsbade-bits/ML-Assignment2
+- **Live Streamlit app**: https://2025aa05203-ml.streamlit.app/
